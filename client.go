@@ -2,83 +2,163 @@ package coc
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
+// BaseURL is the official Clash of Clans API v1 endpoint.
 const BaseURL = "https://api.clashofclans.com/v1"
 
+// Client provides typed access to each Clash of Clans API route.
+// Create one with NewClient and reuse it across goroutines. Each route method
+// makes one request; iterator methods fetch pages lazily.
 type Client struct {
 	token      string
 	httpClient *http.Client
+	baseURL    string
 }
 
-func NewClient(token string) *Client {
-	return &Client{
-		token: token,
-		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
+// ClientOption configures a Client at construction time.
+// Use WithHTTPClient or WithBaseURL.
+type ClientOption func(*Client) error
+
+// NewClient creates a client using an explicit API token and a ten-second HTTP
+// timeout. It never reads environment variables or .env files.
+// An empty token or invalid option returns an error.
+func NewClient(token string, opts ...ClientOption) (*Client, error) {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return nil, fmt.Errorf("coc: API token is required")
 	}
-}
-
-func (c *Client) get(ctx context.Context, path string, target interface{}) error {
-	req, err := http.NewRequestWithContext(ctx, "GET", BaseURL+path, nil)
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
-	req.Header.Set("Accept", "application/json")
-
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("api error: status code %d", res.StatusCode)
-	}
-
-	return json.NewDecoder(res.Body).Decode(target)
-}
-
-func (c *Client) post(ctx context.Context, endpoint string, body interface{}, target interface{}) error {
-	var buf io.Reader
-	if body != nil {
-		jsonBody, err := json.Marshal(body)
-		if err != nil {
-			return err
+	c := &Client{token: token, baseURL: BaseURL, httpClient: &http.Client{Timeout: 10 * time.Second}}
+	for _, opt := range opts {
+		if opt == nil {
+			return nil, fmt.Errorf("coc: client option must not be nil")
 		}
-		buf = bytes.NewBuffer(jsonBody)
+		if err := opt(c); err != nil {
+			return nil, err
+		}
 	}
+	return c, nil
+}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", BaseURL+endpoint, buf)
+// WithHTTPClient uses the supplied HTTP client for all requests. Its timeout and
+// transport replace the defaults. Configure it before use; do not mutate it
+// while requests are in progress. A nil client is rejected.
+func WithHTTPClient(client *http.Client) ClientOption {
+	return func(c *Client) error {
+		if client == nil {
+			return fmt.Errorf("coc: HTTP client must not be nil")
+		}
+		c.httpClient = client
+		return nil
+	}
+}
+
+// WithBaseURL changes the API root, including its version prefix.
+// For example, a test server can supply "http://localhost:8080/v1".
+// The URL must be absolute HTTP(S), with no credentials, query, or fragment.
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		u, err := url.Parse(baseURL)
+		if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" {
+			return fmt.Errorf("coc: invalid API base URL")
+		}
+		c.baseURL = strings.TrimRight(u.String(), "/")
+		return nil
+	}
+}
+
+// APIError is an unsuccessful API response. Use errors.As to inspect it.
+// Reason and Message contain the API error body when it is valid JSON.
+type APIError struct {
+	// StatusCode is the HTTP status, such as 403, 404, or 429.
+	StatusCode int `json:"-"`
+	// Reason is the API's machine-readable explanation.
+	Reason string `json:"reason"`
+	// Message is the API's human-readable explanation.
+	Message string `json:"message"`
+}
+
+// Error describes the status and available API error details.
+func (e *APIError) Error() string {
+	detail := e.Message
+	if e.Reason != "" {
+		detail = e.Reason
+		if e.Message != "" {
+			detail += ": " + e.Message
+		}
+	}
+	if detail == "" {
+		detail = http.StatusText(e.StatusCode)
+	}
+	return fmt.Sprintf("coc: API error %d: %s", e.StatusCode, detail)
+}
+
+func get[T any, O ListOption](c *Client, path string, opts []O) (*T, error) {
+	return request[T](c, http.MethodGet, path, nil, opts)
+}
+
+func post[T any, O ListOption](c *Client, path string, body any, opts []O) (*T, error) {
+	return request[T](c, http.MethodPost, path, body, opts)
+}
+
+func request[T any, O ListOption](c *Client, method, path string, body any, opts []O) (*T, error) {
+	options, err := resolveOptions(opts)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return do[T](c, method, path, body, options)
+}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
-	req.Header.Set("Content-Type", "application/json")
+func do[T any](c *Client, method, path string, body any, options requestOptions) (*T, error) {
+	u, err := url.Parse(c.baseURL + path)
+	if err != nil {
+		return nil, err
+	}
+	query := u.Query()
+	for key, values := range options.query {
+		query[key] = values
+	}
+	u.RawQuery = query.Encode()
+
+	var data io.Reader
+	if body != nil {
+		encoded, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("coc: encode request: %w", err)
+		}
+		data = bytes.NewReader(encoded)
+	}
+	req, err := http.NewRequestWithContext(options.ctx, method, u.String(), data)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Accept", "application/json")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("coc: %s request: %w", method, err)
 	}
 	defer res.Body.Close()
-
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("api error: status code %d", res.StatusCode)
+		apiErr := &APIError{StatusCode: res.StatusCode}
+		// Error bodies may be empty, non-JSON, or generated by a proxy.
+		_ = json.NewDecoder(io.LimitReader(res.Body, 64<<10)).Decode(apiErr)
+		return nil, apiErr
 	}
-
-	if target != nil {
-		return json.NewDecoder(res.Body).Decode(target)
+	var result T
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("coc: decode response: %w", err)
 	}
-	return nil
+	return &result, nil
 }

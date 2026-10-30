@@ -1,14 +1,33 @@
 package coc
 
+// ClanType controls how players join a clan.
 type ClanType string
+
+// Role is a player's role in their clan.
 type Role string
+
+// Village identifies the village associated with an item.
 type Village string
+
+// WarFrequency describes how often a clan participates in wars.
 type WarFrequency string
+
+// WarPreference is a player's preference for war participation.
 type WarPreference string
+
+// PlayerHouseElementType identifies a capital house decoration slot.
 type PlayerHouseElementType string
+
+// State is the API state of a war or league group.
 type State string
+
+// Result is a completed war's outcome.
 type Result string
+
+// BattleModifier identifies a war battle modifier.
 type BattleModifier string
+
+// BattleType identifies the mode of a player battle.
 type BattleType string
 
 const (

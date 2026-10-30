@@ -1,41 +1,34 @@
 package coc
 
-import (
-	"context"
-	"fmt"
-)
+import "fmt"
 
 // GetPlayer retrieves information about a player.
-func (c *Client) GetPlayer(ctx context.Context, playerTag string) (*Player, error) {
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetPlayer(playerTag string, opts ...RequestOption) (*Player, error) {
 	path := fmt.Sprintf("/players/%s", FormatTag(playerTag))
-	var player Player
-	err := c.get(ctx, path, &player)
-	return &player, err
+	return get[Player](c, path, opts)
 }
 
 // GetPlayerBattleLog retrieves a player's recent battle log.
-func (c *Client) GetPlayerBattleLog(ctx context.Context, playerTag string) (*List[BattleLogEntry], error) {
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetPlayerBattleLog(playerTag string, opts ...RequestOption) (*List[BattleLogEntry], error) {
 	path := fmt.Sprintf("/players/%s/battlelog", FormatTag(playerTag))
-	var res List[BattleLogEntry]
-	err := c.get(ctx, path, &res)
-	return &res, err
+	return get[List[BattleLogEntry]](c, path, opts)
 }
 
 // VerifyPlayerToken verifies a player API token from the game settings.
-func (c *Client) VerifyPlayerToken(ctx context.Context, playerTag, token string) (*VerifyTokenResponse, error) {
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) VerifyPlayerToken(playerTag, token string, opts ...RequestOption) (*VerifyTokenResponse, error) {
 	path := fmt.Sprintf("/players/%s/verifytoken", FormatTag(playerTag))
 	body := struct {
 		Token string `json:"token"`
 	}{Token: token}
-	var res VerifyTokenResponse
-	err := c.post(ctx, path, body, &res)
-	return &res, err
+	return post[VerifyTokenResponse](c, path, body, opts)
 }
 
 // GetPlayerLeagueHistory retrieves a player's ranked league history.
-func (c *Client) GetPlayerLeagueHistory(ctx context.Context, playerTag string) (*List[LeagueSeasonResult], error) {
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetPlayerLeagueHistory(playerTag string, opts ...RequestOption) (*List[LeagueSeasonResult], error) {
 	path := fmt.Sprintf("/players/%s/leaguehistory", FormatTag(playerTag))
-	var res List[LeagueSeasonResult]
-	err := c.get(ctx, path, &res)
-	return &res, err
+	return get[List[LeagueSeasonResult]](c, path, opts)
 }

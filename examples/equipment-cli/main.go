@@ -1,26 +1,14 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"fmt"
 	"log"
-	"os"
 	"sort"
 	"strings"
-	"sync"
 
 	coc "github.com/natebabyak/clashofclans-go"
 )
-
-const (
-	topPlayers = 100
-	workers    = 2
-)
-
-type result struct {
-	hero  string
-	combo string
-}
 
 type comboCount struct {
 	combo string
@@ -28,55 +16,35 @@ type comboCount struct {
 }
 
 func main() {
-	token, err := apiToken(".env")
+	token := flag.String("token", "", "Clash of Clans API token (required)")
+	count := flag.Int("players", 100, "number of top global players to inspect")
+	flag.Parse()
+	client, err := coc.NewClient(*token)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ctx := context.Background()
-	client := coc.NewClient(token)
-	limit := topPlayers
-	rankings, err := client.GetPlayerRankings(ctx, "global", &coc.PagingOptions{Limit: &limit})
+	rankings, err := client.GetPlayerRankings(coc.Global, coc.Limit(*count))
 	if err != nil {
-		log.Fatalf("get global player rankings: %v", err)
+		log.Fatal(err)
 	}
-
-	jobs := make(chan string)
-	results := make(chan result)
-	var wg sync.WaitGroup
-	for range workers {
-		wg.Go(func() {
-			for tag := range jobs {
-				player, err := client.GetPlayer(ctx, tag)
-				if err != nil {
-					log.Printf("get player %s: %v", tag, err)
-					continue
-				}
-				for _, hero := range player.Heroes {
-					if len(hero.Equipment) < 2 {
-						continue
-					}
-					results <- result{hero: hero.Name, combo: equipmentCombo(hero)}
-				}
-			}
-		})
-	}
-
-	go func() {
-		for _, player := range rankings.Items {
-			jobs <- player.Tag
-		}
-		close(jobs)
-		wg.Wait()
-		close(results)
-	}()
 
 	combosByHero := make(map[string]map[string]int)
-	for item := range results {
-		if combosByHero[item.hero] == nil {
-			combosByHero[item.hero] = make(map[string]int)
+	for _, ranking := range rankings.Items {
+		player, err := client.GetPlayer(ranking.Tag)
+		if err != nil {
+			log.Printf("get player %s: %v", ranking.Tag, err)
+			continue
 		}
-		combosByHero[item.hero][item.combo]++
+		for _, hero := range player.Heroes {
+			if len(hero.Equipment) < 2 {
+				continue
+			}
+			if combosByHero[hero.Name] == nil {
+				combosByHero[hero.Name] = make(map[string]int)
+			}
+			combosByHero[hero.Name][equipmentCombo(hero)]++
+		}
 	}
 
 	heroes := make([]string, 0, len(combosByHero))
@@ -94,27 +62,6 @@ func main() {
 			fmt.Printf("  %d. %s (%d players)\n", i+1, combo.combo, combo.count)
 		}
 	}
-}
-
-func apiToken(path string) (string, error) {
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		return "", fmt.Errorf("read %s: %w", path, err)
-	}
-
-	for line := range strings.SplitSeq(string(contents), "\n") {
-		line = strings.TrimSpace(line)
-		line = strings.TrimPrefix(line, "export ")
-		key, value, found := strings.Cut(line, "=")
-		if found && strings.TrimSpace(key) == "COC_API_KEY" {
-			value = strings.Trim(strings.TrimSpace(value), "\"'")
-			if value != "" {
-				return value, nil
-			}
-		}
-	}
-
-	return "", fmt.Errorf("COC_API_KEY is required in %s", path)
 }
 
 func equipmentCombo(hero coc.PlayerItemLevel) string {

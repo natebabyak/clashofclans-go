@@ -1,27 +1,42 @@
 package coc
 
+// List is one API response page. Items contains only this page's results.
+// Paging exposes cursors for explicit calls with After or Before.
 type List[T any] struct {
-	Items  []T
-	Paging Paging
+	// Items contains the results in API order.
+	Items []T `json:"items"`
+	// Paging contains navigation cursors supplied by the API.
+	Paging Paging `json:"paging"`
 }
 
+// Paging describes navigation between response pages.
 type Paging struct {
-	Cursors struct {
-		After  string
-		Before string
-	}
+	// Cursors identifies adjacent pages when more results are available.
+	Cursors Cursors `json:"cursors"`
 }
 
+// Cursors contains opaque tokens. An empty token means no page in that direction.
+// Pass tokens unchanged to After or Before; do not decode or escape them.
+type Cursors struct {
+	// After identifies the next page.
+	After string `json:"after"`
+	// Before identifies the previous page.
+	Before string `json:"before"`
+}
+
+// BuilderBaseLeague identifies a builder base league.
 type BuilderBaseLeague struct {
 	Name string
 	Id   int
 }
 
+// CapitalLeague identifies a clan capital league.
 type CapitalLeague struct {
 	Name string
 	Id   int
 }
 
+// Clan contains clan details. Search results may omit fields returned by GetClan.
 type Clan struct {
 	MemberList                  []ClanMember
 	WarLeague                   WarLeague
@@ -56,6 +71,7 @@ type Clan struct {
 	}
 }
 
+// ClanBuilderBaseRanking is one clan entry in builder base rankings.
 type ClanBuilderBaseRanking struct {
 	ClanBuilderBasePoints int
 	ClanPoints            int
@@ -73,11 +89,13 @@ type ClanBuilderBaseRanking struct {
 	}
 }
 
+// ClanCapital describes a clan capital and its districts.
 type ClanCapital struct {
 	CapitalHallLevel int
 	Districts        []ClanDistrictData
 }
 
+// ClanCapitalRanking is one clan entry in capital rankings.
 type ClanCapitalRanking struct {
 	ClanCapitalPoints int
 	ClanPoints        int
@@ -95,6 +113,7 @@ type ClanCapitalRanking struct {
 	}
 }
 
+// ClanCapitalRaidSeason describes a raid weekend, including its logs and member rewards.
 type ClanCapitalRaidSeason struct {
 	AttackLog               []ClanCapitalRaidSeasonAttackLogEntry
 	DefenseLog              []ClanCapitalRaidSeasonDefenseLogEntry
@@ -110,12 +129,14 @@ type ClanCapitalRaidSeason struct {
 	Members                 []ClanCapitalRaidSeasonMember
 }
 
+// ClanCapitalRaidSeasonAttack describes an attack on a capital district.
 type ClanCapitalRaidSeasonAttack struct {
 	Attacker           ClanCapitalRaidSeasonAttacker
 	DestructionPercent int
 	Stars              int
 }
 
+// ClanCapitalRaidSeasonAttackLogEntry describes a capital raid attack log entry.
 type ClanCapitalRaidSeasonAttackLogEntry struct {
 	Defender           ClanCapitalRaidSeasonClanInfo
 	AttackCount        int
@@ -124,11 +145,13 @@ type ClanCapitalRaidSeasonAttackLogEntry struct {
 	Districts          []ClanCapitalRaidSeasonDistrict
 }
 
+// ClanCapitalRaidSeasonAttacker identifies a capital raid attacker.
 type ClanCapitalRaidSeasonAttacker struct {
 	Tag  string
 	Name string
 }
 
+// ClanCapitalRaidSeasonClanInfo identifies a clan in a capital raid log.
 type ClanCapitalRaidSeasonClanInfo struct {
 	Tag       string
 	Name      string
@@ -140,6 +163,7 @@ type ClanCapitalRaidSeasonClanInfo struct {
 	}
 }
 
+// ClanCapitalRaidSeasonDefenseLogEntry describes a capital raid defense log entry.
 type ClanCapitalRaidSeasonDefenseLogEntry struct {
 	Defender           ClanCapitalRaidSeasonClanInfo
 	AttackCount        int
@@ -148,6 +172,7 @@ type ClanCapitalRaidSeasonDefenseLogEntry struct {
 	Districts          []ClanCapitalRaidSeasonDistrict
 }
 
+// ClanCapitalRaidSeasonDistrict describes a district targeted during a capital raid.
 type ClanCapitalRaidSeasonDistrict struct {
 	Stars              int
 	Name               string
@@ -159,6 +184,7 @@ type ClanCapitalRaidSeasonDistrict struct {
 	DistrictHallLevel  int
 }
 
+// ClanCapitalRaidSeasonMember contains a member's raid weekend contribution.
 type ClanCapitalRaidSeasonMember struct {
 	Tag                    string
 	Name                   string
@@ -168,12 +194,14 @@ type ClanCapitalRaidSeasonMember struct {
 	CapitalResourcesLooted int
 }
 
+// ClanDistrictData describes a clan capital district.
 type ClanDistrictData struct {
 	Name              string
 	Id                int
 	DistrictHallLevel int
 }
 
+// ClanMember contains a clan roster entry; use GetPlayer for a full player profile.
 type ClanMember struct {
 	League              League
 	LeagueTier          LeagueTier
@@ -192,6 +220,7 @@ type ClanMember struct {
 	PlayerHouse         PlayerHouse
 }
 
+// ClanRanking is one clan entry in home village rankings.
 type ClanRanking struct {
 	ClanLevel    int
 	ClanPoints   int
@@ -208,6 +237,7 @@ type ClanRanking struct {
 	}
 }
 
+// ClanWar describes a current or clan war league war.
 type ClanWar struct {
 	Clan                 WarClan
 	TeamSize             int
@@ -223,6 +253,7 @@ type ClanWar struct {
 // ClanWarLeagueWar is the response for an individual CWL war (same schema as ClanWar).
 type ClanWarLeagueWar = ClanWar
 
+// ClanWarAttack contains the result of an individual war attack.
 type ClanWarAttack struct {
 	Order                 int
 	AttackerTag           string
@@ -232,6 +263,7 @@ type ClanWarAttack struct {
 	Duration              int
 }
 
+// ClanWarLeagueClan contains a clan's clan war league roster.
 type ClanWarLeagueClan struct {
 	Tag       string
 	ClanLevel int
@@ -244,12 +276,14 @@ type ClanWarLeagueClan struct {
 	}
 }
 
+// ClanWarLeagueClanMember identifies a player on a clan war league roster.
 type ClanWarLeagueClanMember struct {
 	Tag           string
 	TownHallLevel int
 	Name          string
 }
 
+// ClanWarLeagueGroup contains the clans and rounds of a clan war league group.
 type ClanWarLeagueGroup struct {
 	Tag    string
 	State  State
@@ -258,10 +292,12 @@ type ClanWarLeagueGroup struct {
 	Rounds []ClanWarLeagueRound
 }
 
+// ClanWarLeagueRound contains war tags for one clan war league round.
 type ClanWarLeagueRound struct {
 	WarTags []string
 }
 
+// ClanWarLogEntry summarizes a completed clan war.
 type ClanWarLogEntry struct {
 	Clan             WarClan
 	TeamSize         int
@@ -272,6 +308,7 @@ type ClanWarLogEntry struct {
 	Result           Result
 }
 
+// ClanWarMember contains a participant's war attacks and defenses.
 type ClanWarMember struct {
 	Tag                string
 	Name               string
@@ -282,11 +319,13 @@ type ClanWarMember struct {
 	Attacks            []ClanWarAttack
 }
 
+// GoldPassSeason contains the current gold pass season's API timestamps.
 type GoldPassSeason struct {
 	StartTime string
 	EndTime   string
 }
 
+// Label identifies an API label for clan or player filtering.
 type Label struct {
 	Name     string
 	Id       int
@@ -296,12 +335,14 @@ type Label struct {
 	}
 }
 
+// Language identifies a clan chat language.
 type Language struct {
 	Name         string
 	Id           int
 	LanguageCode string
 }
 
+// League identifies a home village league.
 type League struct {
 	Name     string
 	Id       int
@@ -311,6 +352,7 @@ type League struct {
 	}
 }
 
+// LeagueBattleLogEntry describes an attack or defense in a ranked league group.
 type LeagueBattleLogEntry struct {
 	OpponentPlayerTag     string
 	OpponentName          string
@@ -320,12 +362,14 @@ type LeagueBattleLogEntry struct {
 	CreationTime          string
 }
 
+// LeagueGroup contains ranked league members and battle logs.
 type LeagueGroup struct {
 	Members     []LeagueGroupMember
 	AttackLogs  []LeagueBattleLogEntry
 	DefenseLogs []LeagueBattleLogEntry
 }
 
+// LeagueGroupMember contains a player's ranked league group standing.
 type LeagueGroupMember struct {
 	PlayerTag        string
 	PlayerName       string
@@ -338,10 +382,12 @@ type LeagueGroupMember struct {
 	DefenseLoseCount int
 }
 
+// LeagueSeason identifies a Legend League season.
 type LeagueSeason struct {
 	Id string
 }
 
+// LeagueSeasonResult contains a player's ranked league season result.
 type LeagueSeasonResult struct {
 	LeagueSeasonId int
 	LeagueTrophies int
@@ -356,6 +402,7 @@ type LeagueSeasonResult struct {
 	MaxBattles     int
 }
 
+// LeagueTier identifies a ranked league tier.
 type LeagueTier struct {
 	Name     string
 	Id       int
@@ -365,12 +412,14 @@ type LeagueTier struct {
 	}
 }
 
+// LegendLeagueTournamentSeasonResult contains a player's Legend League season standing.
 type LegendLeagueTournamentSeasonResult struct {
 	Trophies int
 	Id       string
 	Rank     int
 }
 
+// Location identifies a geographic region; use its Id with LocationID for rankings.
 type Location struct {
 	LocalizedName string
 	Id            int
@@ -379,6 +428,7 @@ type Location struct {
 	CountryCode   string
 }
 
+// BattleLogEntry describes a recent player battle.
 type BattleLogEntry struct {
 	BattleType            BattleType
 	Attack                bool
@@ -391,20 +441,23 @@ type BattleLogEntry struct {
 	AvailableLoot         []Resource
 }
 
+// Player contains a player profile, troops, heroes, and equipment.
 type Player struct {
-	Clan                     PlayerClan
-	League                   League
-	LeagueTier               LeagueTier
-	BuilderBaseLeague        BuilderBaseLeague
-	Role                     Role
-	WarPreference            WarPreference
-	AttackWins               int
-	DefenseWins              int
-	TownHallLevel            int
-	TownHallWeaponLevel      int
-	LegendStatistics         PlayerLegendStatistics
-	Troops                   []PlayerItemLevel
-	Heroes                   []PlayerItemLevel
+	Clan                PlayerClan
+	League              League
+	LeagueTier          LeagueTier
+	BuilderBaseLeague   BuilderBaseLeague
+	Role                Role
+	WarPreference       WarPreference
+	AttackWins          int
+	DefenseWins         int
+	TownHallLevel       int
+	TownHallWeaponLevel int
+	LegendStatistics    PlayerLegendStatistics
+	Troops              []PlayerItemLevel
+	// Heroes contains hero levels and their currently equipped items.
+	Heroes []PlayerItemLevel
+	// HeroEquipment contains the player's equipment inventory and upgrade levels.
 	HeroEquipment            []PlayerItemLevel
 	Spells                   []PlayerItemLevel
 	Labels                   []Label
@@ -428,6 +481,7 @@ type Player struct {
 	PreviousLeagueSeasonId   int
 }
 
+// PlayerAchievementProgress contains progress toward an in-game achievement.
 type PlayerAchievementProgress struct {
 	Stars          int
 	Value          int
@@ -438,6 +492,7 @@ type PlayerAchievementProgress struct {
 	Village        Village
 }
 
+// PlayerBuilderBaseRanking is one player entry in builder base rankings.
 type PlayerBuilderBaseRanking struct {
 	Clan                PlayerRankingClan
 	BuilderBaseLeague   BuilderBaseLeague
@@ -449,6 +504,7 @@ type PlayerBuilderBaseRanking struct {
 	BuilderBaseTrophies int
 }
 
+// PlayerClan identifies the clan in a player profile.
 type PlayerClan struct {
 	Tag       string
 	ClanLevel int
@@ -460,27 +516,23 @@ type PlayerClan struct {
 	}
 }
 
+// PlayerHouse contains a player's capital house decorations.
 type PlayerHouse struct {
-	Elements []struct {
-		Type PlayerHouseElementType
-		Id   int
-	}
+	Elements []PlayerHouseElement
 }
 
+// PlayerItemLevel describes a troop, spell, hero, or equipment upgrade. Heroes include equipped items.
 type PlayerItemLevel struct {
 	Level              int
 	Name               string
 	MaxLevel           int
 	Village            Village
 	SuperTroopIsActive bool
-	Equipment          []struct {
-		Name     string
-		Level    int
-		MaxLevel int
-		Village  Village
-	}
+	// Equipment contains the items equipped by this hero, when present.
+	Equipment []Equipment
 }
 
+// PlayerLegendStatistics contains current and historical Legend League results.
 type PlayerLegendStatistics struct {
 	CurrentSeason             LegendLeagueTournamentSeasonResult
 	BestSeason                LegendLeagueTournamentSeasonResult
@@ -490,6 +542,7 @@ type PlayerLegendStatistics struct {
 	LegendTrophies            int
 }
 
+// PlayerRanking is one player ranking entry; use GetPlayer for the full profile.
 type PlayerRanking struct {
 	Clan         PlayerRankingClan
 	League       League
@@ -504,6 +557,7 @@ type PlayerRanking struct {
 	Trophies     int
 }
 
+// PlayerRankingClan identifies the clan in a player ranking entry.
 type PlayerRankingClan struct {
 	Tag       string
 	Name      string
@@ -514,17 +568,20 @@ type PlayerRankingClan struct {
 	}
 }
 
+// Resource contains a named resource amount.
 type Resource struct {
 	Name   string
 	Amount int
 }
 
+// VerifyTokenResponse contains the API's player-token verification result.
 type VerifyTokenResponse struct {
 	Tag    string
 	Token  string
 	Status string
 }
 
+// WarClan contains a clan's participants and performance in a war.
 type WarClan struct {
 	DestructionPercentage float64
 	Tag                   string
@@ -541,7 +598,26 @@ type WarClan struct {
 	Members   []ClanWarMember
 }
 
+// WarLeague identifies a clan war league.
 type WarLeague struct {
 	Name string
+	Id   int
+}
+
+// Equipment describes an equipped hero item and its upgrade level.
+type Equipment struct {
+	// Name is the in-game equipment name.
+	Name string
+	// Level is the current upgrade level.
+	Level int
+	// MaxLevel is the maximum upgrade level.
+	MaxLevel int
+	// Village identifies the village where this equipment is used.
+	Village Village
+}
+
+// PlayerHouseElement describes a decoration in a player's capital house.
+type PlayerHouseElement struct {
+	Type PlayerHouseElementType
 	Id   int
 }

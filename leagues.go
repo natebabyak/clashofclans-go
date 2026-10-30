@@ -1,113 +1,99 @@
 package coc
 
 import (
-	"context"
 	"fmt"
 	"net/url"
 )
 
 // GetLeagueTier retrieves information about a league tier.
-func (c *Client) GetLeagueTier(ctx context.Context, leagueTierId int) (*LeagueTier, error) {
-	path := fmt.Sprintf("/leaguetiers/%d", leagueTierId)
-	var tier LeagueTier
-	err := c.get(ctx, path, &tier)
-	return &tier, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetLeagueTier(leagueTierID int, opts ...RequestOption) (*LeagueTier, error) {
+	path := fmt.Sprintf("/leaguetiers/%d", leagueTierID)
+	return get[LeagueTier](c, path, opts)
 }
 
 // GetCapitalLeagues lists capital leagues.
-func (c *Client) GetCapitalLeagues(ctx context.Context, opts *PagingOptions) (*List[CapitalLeague], error) {
-	path := withQuery("/capitalleagues", opts.query())
-	var res List[CapitalLeague]
-	err := c.get(ctx, path, &res)
-	return &res, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetCapitalLeagues(opts ...ListOption) (*List[CapitalLeague], error) {
+	path := "/capitalleagues"
+	return get[List[CapitalLeague]](c, path, opts)
 }
 
 // GetLeagueTiers lists league tiers.
-func (c *Client) GetLeagueTiers(ctx context.Context, opts *PagingOptions) (*List[LeagueTier], error) {
-	path := withQuery("/leaguetiers", opts.query())
-	var res List[LeagueTier]
-	err := c.get(ctx, path, &res)
-	return &res, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetLeagueTiers(opts ...ListOption) (*List[LeagueTier], error) {
+	path := "/leaguetiers"
+	return get[List[LeagueTier]](c, path, opts)
 }
 
 // GetLeagues lists leagues.
-func (c *Client) GetLeagues(ctx context.Context, opts *PagingOptions) (*List[League], error) {
-	path := withQuery("/leagues", opts.query())
-	var res List[League]
-	err := c.get(ctx, path, &res)
-	return &res, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetLeagues(opts ...ListOption) (*List[League], error) {
+	path := "/leagues"
+	return get[List[League]](c, path, opts)
 }
 
 // GetLeagueSeasonRankings retrieves league season rankings (Legend League only).
-func (c *Client) GetLeagueSeasonRankings(ctx context.Context, leagueId int, seasonId string, opts *PagingOptions) (*List[PlayerRanking], error) {
-	path := withQuery(fmt.Sprintf("/leagues/%d/seasons/%s", leagueId, seasonId), opts.query())
-	var res List[PlayerRanking]
-	err := c.get(ctx, path, &res)
-	return &res, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetLeagueSeasonRankings(leagueID int, seasonID string, opts ...ListOption) (*List[PlayerRanking], error) {
+	path := fmt.Sprintf("/leagues/%d/seasons/%s", leagueID, url.PathEscape(seasonID))
+	return get[List[PlayerRanking]](c, path, opts)
 }
 
 // GetCapitalLeague retrieves information about a capital league.
-func (c *Client) GetCapitalLeague(ctx context.Context, leagueId int) (*CapitalLeague, error) {
-	path := fmt.Sprintf("/capitalleagues/%d", leagueId)
-	var league CapitalLeague
-	err := c.get(ctx, path, &league)
-	return &league, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetCapitalLeague(leagueID int, opts ...RequestOption) (*CapitalLeague, error) {
+	path := fmt.Sprintf("/capitalleagues/%d", leagueID)
+	return get[CapitalLeague](c, path, opts)
 }
 
 // GetBuilderBaseLeague retrieves information about a builder base league.
-func (c *Client) GetBuilderBaseLeague(ctx context.Context, leagueId int) (*BuilderBaseLeague, error) {
-	path := fmt.Sprintf("/builderbaseleagues/%d", leagueId)
-	var league BuilderBaseLeague
-	err := c.get(ctx, path, &league)
-	return &league, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetBuilderBaseLeague(leagueID int, opts ...RequestOption) (*BuilderBaseLeague, error) {
+	path := fmt.Sprintf("/builderbaseleagues/%d", leagueID)
+	return get[BuilderBaseLeague](c, path, opts)
 }
 
 // GetBuilderBaseLeagues lists builder base leagues.
-func (c *Client) GetBuilderBaseLeagues(ctx context.Context, opts *PagingOptions) (*List[BuilderBaseLeague], error) {
-	path := withQuery("/builderbaseleagues", opts.query())
-	var res List[BuilderBaseLeague]
-	err := c.get(ctx, path, &res)
-	return &res, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetBuilderBaseLeagues(opts ...ListOption) (*List[BuilderBaseLeague], error) {
+	path := "/builderbaseleagues"
+	return get[List[BuilderBaseLeague]](c, path, opts)
 }
 
 // GetLeague retrieves information about a league.
-func (c *Client) GetLeague(ctx context.Context, leagueId int) (*League, error) {
-	path := fmt.Sprintf("/leagues/%d", leagueId)
-	var league League
-	err := c.get(ctx, path, &league)
-	return &league, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetLeague(leagueID int, opts ...RequestOption) (*League, error) {
+	path := fmt.Sprintf("/leagues/%d", leagueID)
+	return get[League](c, path, opts)
 }
 
 // GetLeagueGroup retrieves a ranked league group.
-func (c *Client) GetLeagueGroup(ctx context.Context, leagueGroupTag string, leagueSeasonId int, playerTag string) (*LeagueGroup, error) {
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetLeagueGroup(leagueGroupTag string, leagueSeasonID int, playerTag string, opts ...RequestOption) (*LeagueGroup, error) {
 	q := url.Values{}
-	q.Set("playerTag", playerTag)
-	path := withQuery(fmt.Sprintf("/leaguegroup/%s/%d", FormatTag(leagueGroupTag), leagueSeasonId), q)
-	var group LeagueGroup
-	err := c.get(ctx, path, &group)
-	return &group, err
+	q.Set("playerTag", normalizeTag(playerTag))
+	path := withQuery(fmt.Sprintf("/leaguegroup/%s/%d", FormatTag(leagueGroupTag), leagueSeasonID), q)
+	return get[LeagueGroup](c, path, opts)
 }
 
 // GetLeagueSeasons lists league seasons (Legend League only).
-func (c *Client) GetLeagueSeasons(ctx context.Context, leagueId int, opts *PagingOptions) (*List[LeagueSeason], error) {
-	path := withQuery(fmt.Sprintf("/leagues/%d/seasons", leagueId), opts.query())
-	var res List[LeagueSeason]
-	err := c.get(ctx, path, &res)
-	return &res, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetLeagueSeasons(leagueID int, opts ...ListOption) (*List[LeagueSeason], error) {
+	path := fmt.Sprintf("/leagues/%d/seasons", leagueID)
+	return get[List[LeagueSeason]](c, path, opts)
 }
 
 // GetWarLeague retrieves information about a war league.
-func (c *Client) GetWarLeague(ctx context.Context, leagueId int) (*WarLeague, error) {
-	path := fmt.Sprintf("/warleagues/%d", leagueId)
-	var league WarLeague
-	err := c.get(ctx, path, &league)
-	return &league, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetWarLeague(leagueID int, opts ...RequestOption) (*WarLeague, error) {
+	path := fmt.Sprintf("/warleagues/%d", leagueID)
+	return get[WarLeague](c, path, opts)
 }
 
 // GetWarLeagues lists war leagues.
-func (c *Client) GetWarLeagues(ctx context.Context, opts *PagingOptions) (*List[WarLeague], error) {
-	path := withQuery("/warleagues", opts.query())
-	var res List[WarLeague]
-	err := c.get(ctx, path, &res)
-	return &res, err
+// Makes one API request. Use WithContext to supply cancellation or a deadline.
+func (c *Client) GetWarLeagues(opts ...ListOption) (*List[WarLeague], error) {
+	path := "/warleagues"
+	return get[List[WarLeague]](c, path, opts)
 }
