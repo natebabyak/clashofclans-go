@@ -1,3 +1,3 @@
-module github.com/natebabyak/clash-of-clans-go
+module github.com/natebabyak/clashofclans-go
 
 go 1.25.6

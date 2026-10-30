@@ -1,4 +1,4 @@
-package clashofclansgo
+package coc
 
 type List[T any] struct {
 	Items  []T

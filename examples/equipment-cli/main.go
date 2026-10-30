@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	coc "github.com/natebabyak/clash-of-clans-go"
+	coc "github.com/natebabyak/clashofclans-go"
 )
 
 const (

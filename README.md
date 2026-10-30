@@ -10,12 +10,12 @@ A Go client for the Clash of Clans API.
 
 ## Getting Started
 
-1. [Register for access to the Clash of Clans API](https://developer.clashofclans.com/sign-in#/register).
+1. [Register for access to the Clash of Clans API](https://developer.clashofclans.com/sign-in#/register)
 
 2. [Create a Clash of Clans API key](https://developer.clashofclans.com/account#/new-key)
 
 ```bash
-go get github.com/natebabyak/clash-of-clans-go
+go get github.com/natebabyak/clashofclans-go
 ```
 
 ```go

@@ -1,4 +1,4 @@
-package clashofclansgo
+package coc
 
 import "context"
 

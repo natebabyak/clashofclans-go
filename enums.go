@@ -1,4 +1,4 @@
-package clashofclansgo
+package coc
 
 type ClanType string
 type Role string
